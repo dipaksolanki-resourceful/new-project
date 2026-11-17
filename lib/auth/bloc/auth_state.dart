@@ -1,13 +1,49 @@
-abstract class AuthState {}
+import 'package:equatable/equatable.dart';
 
-class AuthInitial extends AuthState {}
+enum ApiStatus { initial, loading, success, failure }
 
-class AuthLoading extends AuthState {}
+enum AuthOperation { none, login, signup, checkAuth, logout }
 
-class AuthSuccess extends AuthState {}
-class AuthUnauthenticated extends AuthState {}
-class AuthFailure extends AuthState {
-  final String errorMessage;
+enum AuthenticationStatus { unknown, authenticated, unauthenticated }
 
-  AuthFailure(this.errorMessage);
+class AuthState extends Equatable {
+  final ApiStatus status;
+  final AuthOperation operation;
+  final AuthenticationStatus authStatus;
+  final dynamic data;
+  final String message;
+
+  const AuthState({
+    this.status = ApiStatus.initial,
+    this.operation = AuthOperation.none,
+    this.authStatus = AuthenticationStatus.unknown,
+    this.data,
+    this.message = '',
+  });
+
+  AuthState copyWith({
+    ApiStatus? status,
+    AuthOperation? operation,
+    AuthenticationStatus? authStatus,
+    dynamic data,
+    String? message,
+  }) {
+    return AuthState(
+      status: status ?? this.status,
+      authStatus: authStatus ?? this.authStatus,
+      data: data ?? this.data,
+      operation: operation ?? this.operation,
+      message: message ?? this.message,
+    );
+  }
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [
+    status,
+    operation,
+    authStatus,
+    data,
+    message
+  ];
 }

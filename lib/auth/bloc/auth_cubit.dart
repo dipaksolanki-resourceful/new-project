@@ -1,55 +1,163 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_project/auth/bloc/auth_service.dart';
-import 'package:new_project/auth/bloc/auth_state.dart';
 
+import 'auth_service.dart';
+import 'auth_state.dart';
+import '../repository/auth_repository.dart';
 import '../auth_preferences.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthService authService;
   final AuthPreferences preferences;
+  final AuthRepository authRepository;
 
-  AuthCubit(this.authService,this.preferences) : super(AuthInitial());
+  AuthCubit(this.authService, this.preferences, this.authRepository)
+    : super(const AuthState());
 
-  Future<void> login(String email, String password) async {
-    emit(AuthLoading());
+  // LOGIN
+  Future<void> login(dynamic data) async {
+    emit(
+      state.copyWith(
+        status: ApiStatus.loading,
+        operation: AuthOperation.login,
+        message: '',
+      ),
+    );
 
-    final result = authService.login(email, password);
+    try {
+      final result = await authRepository.loginUser(data: data);
 
-    if (result) {
-      await preferences.saveLogin(email);
-      emit(AuthSuccess());
-    } else {
-      emit(AuthFailure('Invalid email or password'));
+      if (result) {
+        await preferences.saveLogin(data['email']);
+
+        emit(
+          state.copyWith(
+            status: ApiStatus.success,
+            operation: AuthOperation.login,
+            authStatus: AuthenticationStatus.authenticated,
+            message: 'Login successful',
+          ),
+        );
+      } else {
+        emit(
+          state.copyWith(
+            status: ApiStatus.failure,
+            operation: AuthOperation.login,
+            message: 'Invalid email or password',
+          ),
+        );
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: ApiStatus.failure,
+          operation: AuthOperation.login,
+          message: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> signup(String email, String password) async {
-    emit(AuthLoading());
+  // SIGNUP
+  Future<void> signup(Map<String, dynamic> data) async {
+    emit(
+      state.copyWith(
+        status: ApiStatus.loading,
+        operation: AuthOperation.signup,
+        message: '',
+      ),
+    );
 
-    final result = authService.signup(email, password);
+    try {
+      final response = await authRepository.createUser(data: data);
 
-    if (result) {
-      await preferences.saveLogin(email);
-      emit(AuthSuccess());
-    } else {
-      emit(AuthFailure('User already exists'));
+      emit(
+        state.copyWith(
+          status: ApiStatus.success,
+          operation: AuthOperation.signup,
+          data: response,
+          message: 'Signup successful',
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: ApiStatus.failure,
+          operation: AuthOperation.signup,
+          message: e.toString(),
+        ),
+      );
     }
   }
 
+  // CHECK SESSION
   Future<void> checkSession() async {
-    emit(AuthLoading());
+    emit(
+      state.copyWith(
+        status: ApiStatus.loading,
+        operation: AuthOperation.checkAuth,
+      ),
+    );
 
-    final loggedIn = await preferences.isLoggedIn();
+    try {
+      final loggedIn = await preferences.isLoggedIn();
 
-    if (loggedIn) {
-      emit(AuthSuccess());
-    } else {
-      emit(AuthUnauthenticated());
+      if (loggedIn) {
+        emit(
+          state.copyWith(
+            status: ApiStatus.success,
+            operation: AuthOperation.checkAuth,
+            authStatus: AuthenticationStatus.authenticated,
+          ),
+        );
+      } else {
+        emit(
+          state.copyWith(
+            status: ApiStatus.success,
+            operation: AuthOperation.checkAuth,
+            authStatus: AuthenticationStatus.unauthenticated,
+          ),
+        );
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: ApiStatus.failure,
+          operation: AuthOperation.checkAuth,
+          message: e.toString(),
+        ),
+      );
     }
   }
 
+  // LOGOUT
   Future<void> logout() async {
-    await preferences.logout();
-    emit(AuthUnauthenticated());
+    try {
+      emit(
+        state.copyWith(
+          status: ApiStatus.loading,
+          operation: AuthOperation.logout,
+        ),
+      );
+      final result = await authRepository.logoutUser();
+      await preferences.logout();
+
+      emit(
+        state.copyWith(
+          status: ApiStatus.success,
+          operation: AuthOperation.logout,
+          authStatus: AuthenticationStatus.unauthenticated,
+          message: 'Logout successful',
+          data: result,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: ApiStatus.failure,
+          operation: AuthOperation.logout,
+          message: e.toString(),
+        ),
+      );
+    }
   }
 }

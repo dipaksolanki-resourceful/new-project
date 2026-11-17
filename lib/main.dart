@@ -4,9 +4,12 @@ import 'package:new_project/auth/auth_preferences.dart';
 import 'package:new_project/auth/bloc/auth_bloc.dart';
 import 'package:new_project/auth/bloc/auth_cubit.dart';
 import 'package:new_project/auth/bloc/auth_service.dart';
+import 'package:new_project/auth/repository/auth_repository.dart';
+import 'package:new_project/service/api_service.dart';
 import 'feature/home/cubit/counter_cubit.dart';
 import 'feature/task/bloc/task_bloc.dart';
 import 'router/app_router.dart';
+import 'widgets/app_snackbar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,21 +23,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) => CounterCubit(),
-        ),
-        BlocProvider(
-          create: (context) => TaskBloc(),
-        ),
+        BlocProvider(create: (context) => CounterCubit()),
+        BlocProvider(create: (context) => TaskBloc()),
 
         BlocProvider(
-          create: (context) => AuthCubit(AuthService(),AuthPreferences()),
+          create: (context) => AuthCubit(
+            AuthService(),
+            AuthPreferences(),
+            AuthRepository(ApiService()),
+          ),
         ),
-        BlocProvider(
-          create: (context) => AuthBloc(AuthService()),
-        ),
+        // BlocProvider(create: (context) => AuthBloc(AuthService())),
       ],
       child: MaterialApp.router(
+        scaffoldMessengerKey: AppSnackBar.messengerKey,
         title: 'Flutter Demo',
         debugShowCheckedModeBanner: false,
         // home: const HomeScreen(),
@@ -43,4 +45,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

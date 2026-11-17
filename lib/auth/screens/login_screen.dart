@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:new_project/auth/bloc/auth_cubit.dart';
 import 'package:new_project/auth/bloc/auth_state.dart';
+import 'package:new_project/widgets/app_text_field.dart';
+
+import '../../widgets/app_snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +17,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  bool showPassword = true;
+  final formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -26,13 +31,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
-      );
+    if (formKey.currentState!.validate()) {
+
       return;
     }
-    context.read<AuthCubit>().login(email, password);
+    final data = {"email": email, "password": password};
+    context.read<AuthCubit>().login(data);
   }
 
   @override
@@ -42,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: BlocConsumer<AuthCubit, AuthState>(
           builder: (context, state) {
-            final loading = state is AuthLoading;
+            final loading = state.status == ApiStatus.loading;
 
             return Center(
               child: SingleChildScrollView(
@@ -70,52 +74,64 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const Text(
                       'Login to continue your journey.',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 15),
                     ),
 
                     const SizedBox(height: 35),
 
-                    const Text('Email Address'),
 
-                    const SizedBox(height: 8),
-
-                    TextField(
+                    AppTextField(
                       controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your email',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+                      label: 'Enter your email',
+                      isHint: true,
+                      heading: "Email address",
+                      leading: Icons.email_outlined,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return "Please enter your email address";
+                        }
+                        if (!RegExp(
+                          r"^[a-zA-Z0-9.a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                        ).hasMatch(v)) {
+                          return "Please enter a valid email address";
+                        }
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 20),
 
-                    const Text('Password'),
 
-                    const SizedBox(height: 8),
-
-                    TextField(
+                    AppTextField(
                       controller: passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
+                      label: 'Enter your password',
+                      isHint: true,
+                      isPassword: showPassword,
+                      heading: "Password",
+                      leading: Icons.lock_outline,
+                      trailing: IconButton(
+                        onPressed: () {
+                          showPassword = !showPassword;
+                          setState(() {});
+                        },
+                        icon: Icon(
+                          showPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          size: 26,
                         ),
                       ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return "Please enter password";
+                        }
+                        if (!RegExp(
+                          r'^(?=.*[A-Za-z])(?=.*\d).{8,}$',
+                        ).hasMatch(v)) {
+                          return "Password must contain at least 8 characters, one letter\n and one number";
+                        }
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 30),
@@ -134,52 +150,52 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: loading
                             ? const CircularProgressIndicator(
-                          color: Colors.white,
-                        )
+                                color: Colors.white,
+                              )
                             : const Text(
-                          'Login',
-                          style: TextStyle(fontSize: 17),
-                        ),
+                                'Login',
+                                style: TextStyle(fontSize: 17),
+                              ),
                       ),
                     ),
-                const SizedBox(height: 25),
+                    const SizedBox(height: 25),
 
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account? "),
-                      GestureDetector(
-                        onTap: () {
-                          context.go('/signup');
-                        },
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            color: Color(0xff6254D9),
-                            fontWeight: FontWeight.bold,
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text("Don't have an account? "),
+                          GestureDetector(
+                            onTap: () {
+                              context.go('/signup');
+                            },
+                            child: const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                color: Color(0xff6254D9),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),)
+                    ),
                   ],
                 ),
               ),
             );
-
           },
           listener: (context, state) {
-            if(state is AuthSuccess)
-              {
+            if (state.status == ApiStatus.success) {
+              if (state.operation == AuthOperation.login) {
+                AppSnackBar.success(state.message);
+
                 context.go("/home");
               }
-            if(state is AuthFailure)
-              {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.errorMessage)),
-                );
-              }
+            }
+            if (state.status == ApiStatus.failure) {
+              AppSnackBar.error(state.message);
+            }
           },
         ),
       ),

@@ -38,6 +38,8 @@ dependencies:
   go_router: ^17.5.0
   equatable: ^3.0.0
   shared_preferences:
+  dio:
+  intl:
 
 dev_dependencies:
   flutter_test:
