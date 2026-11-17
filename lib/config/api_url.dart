@@ -1,0 +1,1 @@
+String baseUrl = "http://65.20.78.222/flutter-practicals/public";
