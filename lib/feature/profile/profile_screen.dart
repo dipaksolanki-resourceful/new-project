@@ -7,8 +7,22 @@ import 'package:new_project/auth/bloc/auth_state.dart';
 
 import '../../auth/bloc/auth_cubit.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+
+  @override
+  void initState() {
+
+    super.initState();
+   // context.read<profile>();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -48,4 +62,6 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+
 }

@@ -25,27 +25,16 @@ class AuthCubit extends Cubit<AuthState> {
 
     try {
       final result = await authRepository.loginUser(data: data);
-
-      if (result) {
-        await preferences.saveLogin(data['email']);
-
-        emit(
-          state.copyWith(
-            status: ApiStatus.success,
-            operation: AuthOperation.login,
-            authStatus: AuthenticationStatus.authenticated,
-            message: 'Login successful',
-          ),
-        );
-      } else {
-        emit(
-          state.copyWith(
-            status: ApiStatus.failure,
-            operation: AuthOperation.login,
-            message: 'Invalid email or password',
-          ),
-        );
-      }
+      await preferences.saveLogin(data['email'],result['data']['accessToken']);
+      emit(
+        state.copyWith(
+          status: ApiStatus.success,
+          operation: AuthOperation.login,
+          authStatus: AuthenticationStatus.authenticated,
+          data: result,
+          message: 'Login successful',
+        ),
+      );
     } catch (e) {
       emit(
         state.copyWith(
@@ -69,7 +58,7 @@ class AuthCubit extends Cubit<AuthState> {
 
     try {
       final response = await authRepository.createUser(data: data);
-
+      await preferences.saveLogin(data['email'],response['data']['accessToken']);
       emit(
         state.copyWith(
           status: ApiStatus.success,

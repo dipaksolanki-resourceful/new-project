@@ -33,16 +33,7 @@ class AuthRepository {
     }
   }
 
-  // GET API example
-  Future<dynamic> getUser() async {
-    try {
-      final response = await apiService.get('/users/profile');
 
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
 
   Future<dynamic> logoutUser() async {
     try {
